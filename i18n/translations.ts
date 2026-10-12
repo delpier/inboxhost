@@ -80,10 +80,11 @@ const pt = {
     status_past: 'Terminada',
     status_today: 'Check-in hoje',
     status_tomorrow: 'Check-in amanhã',
-    no_messages: 'Sem mensagens ainda',
-    placeholder: 'Escreve uma mensagem...',
+    no_messages: 'Sem mensagens nem notas ainda',
+    placeholder: 'Escreve uma mensagem ou uma nota interna...',
     not_found: 'Reserva não encontrada',
     source: 'Calendário',
+    internal_notes_title: 'Notas internas',
     edit: 'Editar',
   },
   // Edit guest details
@@ -118,6 +119,8 @@ const pt = {
     subject: (property: string) => `A sua reserva — ${property}`,
     property_fallback: 'o alojamento',
     hint: 'A mensagem é enviada pela app escolhida e fica registada aqui.',
+    note: 'Nota',
+    note_saved: 'Nota interna — só tu a vês.',
   },
   // Message templates — {name} {property} {checkIn} {checkOut} {nights}
   templates: {
@@ -249,10 +252,11 @@ const en: Translations = {
     status_past: 'Completed',
     status_today: 'Check-in today',
     status_tomorrow: 'Check-in tomorrow',
-    no_messages: 'No messages yet',
-    placeholder: 'Write a message...',
+    no_messages: 'No messages or notes yet',
+    placeholder: 'Write a message or an internal note...',
     not_found: 'Reservation not found',
     source: 'Calendar',
+    internal_notes_title: 'Internal notes',
     edit: 'Edit',
   },
   edit_guest: {
@@ -285,6 +289,8 @@ const en: Translations = {
     subject: (property: string) => `Your reservation — ${property}`,
     property_fallback: 'the property',
     hint: 'The message is sent by the chosen app and logged here.',
+    note: 'Note',
+    note_saved: 'Internal note — only you can see it.',
   },
   templates: {
     welcome: {

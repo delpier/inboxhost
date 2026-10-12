@@ -9,20 +9,28 @@ export const CHANNEL_ICONS: Record<MessageChannel, keyof typeof Ionicons.glyphMa
   email:    'mail-outline',
 };
 
+export const NOTE_ICON: keyof typeof Ionicons.glyphMap = 'document-text-outline';
+
 export function MessageBubble({ message }: { message: Message }) {
   const sent = message.direction === 'sent';
+  // Sem canal = nota interna (nunca foi enviada ao hóspede)
+  const note = sent && !message.channel;
 
   return (
     <View className={`mb-2 max-w-xs ${sent ? 'self-end' : 'self-start'}`}>
       <View className={`rounded-2xl px-3.5 py-2.5 ${
-        sent ? 'bg-blue-600 rounded-br-sm' : 'bg-slate-800 rounded-bl-sm'
+        note
+          ? 'bg-amber-400/15 border border-amber-400/40 rounded-br-sm'
+          : sent ? 'bg-blue-600 rounded-br-sm' : 'bg-slate-800 rounded-bl-sm'
       }`}>
         <Text className="text-slate-100 text-sm leading-5">{message.text}</Text>
       </View>
       <View className={`flex-row items-center gap-1 mt-0.5 ${sent ? 'self-end' : 'self-start'}`}>
-        {message.channel ? (
-          <Ionicons name={CHANNEL_ICONS[message.channel]} size={11} color="#475569" />
-        ) : null}
+        <Ionicons
+          name={message.channel ? CHANNEL_ICONS[message.channel] : note ? NOTE_ICON : 'chatbubble-outline'}
+          size={11}
+          color="#475569"
+        />
         <Text className="text-slate-600 text-xs">
           {format(parseISO(message.timestamp), 'dd/MM HH:mm')}
         </Text>

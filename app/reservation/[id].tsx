@@ -16,8 +16,9 @@ import {
   markMessagesAsRead,
 } from '../../services/storage';
 import { useI18n } from '../../i18n';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AdBanner } from '../../components/AdBanner';
-import { MessageBubble, CHANNEL_ICONS } from '../../components/MessageBubble';
+import { MessageBubble, CHANNEL_ICONS, NOTE_ICON } from '../../components/MessageBubble';
 import {
   CHANNELS,
   TEMPLATE_KEYS,
@@ -60,6 +61,7 @@ export default function ReservationDetail() {
   const [showInfo, setShowInfo]       = useState(true);
   const listRef = useRef<FlatList>(null);
   const dateFnsLocale = locale === 'pt' ? pt : enUS;
+  const insets = useSafeAreaInsets();
 
   const load = useCallback(async () => {
     const [all, sources] = await Promise.all([getReservations(), getCalendarSources()]);
@@ -113,6 +115,29 @@ export default function ReservationDetail() {
         read:          true,
       };
       await addMessageToReservation(reservation.id, msg);
+      setInput('');
+      await load();
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // Nota interna: fica só no telemóvel, não é enviada ao hóspede
+  const saveNote = async () => {
+    if (!reservation || sending) return;
+    const text = input.trim();
+    if (!text) return Alert.alert(t.calendars.attention, t.messaging.empty_text);
+    setSending(true);
+    try {
+      await addMessageToReservation(reservation.id, {
+        id:            Date.now().toString(),
+        reservationId: reservation.id,
+        text,
+        direction:     'sent',
+        timestamp:     new Date().toISOString(),
+        read:          true,
+      });
       setInput('');
       await load();
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
@@ -258,7 +283,11 @@ export default function ReservationDetail() {
         renderItem={({ item }) => <MessageBubble message={item} />}
       />
 
-      {/* Composer: modelos + texto + canal de envio */}
+      {/* Publicidade + composer; o padding inferior evita os botões de navegação do Android */}
+      <View style={{ paddingBottom: insets.bottom }} className="bg-slate-900">
+      <AdBanner />
+
+      {/* Composer: modelos + texto + canal de envio ou nota interna */}
       <View className="px-3 pt-2 pb-3 bg-slate-900 border-t border-slate-800 gap-2">
         <ScrollView
           horizontal
@@ -287,7 +316,6 @@ export default function ReservationDetail() {
         />
 
         <View className="flex-row items-center gap-2">
-          <Text className="text-slate-500 text-xs mr-1">{t.messaging.send_via}</Text>
           {CHANNELS.map(channel => {
             const available = canUseChannel(channel, reservation);
             const active    = available && !!input.trim() && !sending;
@@ -311,10 +339,26 @@ export default function ReservationDetail() {
               </TouchableOpacity>
             );
           })}
+          <TouchableOpacity
+            onPress={saveNote}
+            disabled={sending}
+            accessibilityLabel={t.detail.internal_notes_title}
+            className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-2.5 ${
+              input.trim() && !sending ? 'bg-amber-400' : 'bg-slate-800'
+            }`}
+          >
+            <Ionicons
+              name={NOTE_ICON}
+              size={16}
+              color={input.trim() && !sending ? '#020617' : '#64748B'}
+            />
+            <Text className={`text-xs font-semibold ${input.trim() && !sending ? 'text-slate-950' : 'text-slate-500'}`}>
+              {t.messaging.note}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-
-      <AdBanner />
+      </View>
     </KeyboardAvoidingView>
   );
 }

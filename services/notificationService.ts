@@ -139,6 +139,14 @@ async function doReschedule(): Promise<number> {
   return pending.length;
 }
 
+export async function getScheduledCount(): Promise<number> {
+  try {
+    return (await Notifications.getAllScheduledNotificationsAsync()).length;
+  } catch {
+    return 0;
+  }
+}
+
 // Serializa as chamadas: duas reprogramações em simultâneo duplicavam alertas
 let queue: Promise<unknown> = Promise.resolve();
 

@@ -10,9 +10,9 @@ import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
 import { OfflineBanner } from '../../components/OfflineBanner';
 import { NotificationSettings } from '../../components/NotificationSettings';
-import { CalendarSourceCard } from '../../components/CalendarSourceCard';
 import { useNetwork } from '../../hooks/useNetwork';
 import { usePro } from '../../context/ProContext';
+import { CalendarSourceCard } from '../../components/CalendarSourceCard';
 import { HeaderActions } from './_layout';
 import { CalendarSource, Platform, PLATFORM_COLORS } from '../../types';
 import { FREE_CALENDAR_LIMIT } from '../../constants/config';
@@ -26,10 +26,10 @@ const PLATFORM_EMOJI: Record<Platform, string> = {
 };
 
 export default function CalendarsScreen() {
-  const { t, locale } = useI18n();
+  const { t, locale }   = useI18n();
   const { isConnected } = useNetwork();
-  const { isPro } = usePro();
-  const navigation = useNavigation();
+  const { isPro }       = usePro();
+  const navigation      = useNavigation();
   const { sources, addSource, removeSource, toggle, syncSource } = useCalendarSources();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -38,20 +38,16 @@ export default function CalendarsScreen() {
   const [platform, setPlatform] = useState<Platform>('airbnb');
   const [saving, setSaving]     = useState(false);
 
-  const resetForm = () => { setName(''); setUrl(''); setPlatform('airbnb'); };
-
-  // Limite de calendários
-  const calendarLimit   = isPro ? Infinity : FREE_CALENDAR_LIMIT;
-  const atLimit         = sources.length >= calendarLimit;
-  const slotsRemaining  = isPro ? null : Math.max(0, FREE_CALENDAR_LIMIT - sources.length);
+  const calendarLimit  = isPro ? Infinity : FREE_CALENDAR_LIMIT;
+  const atLimit        = sources.length >= calendarLimit;
 
   const openAddModal = () => {
     if (atLimit) {
       Alert.alert(
         locale === 'pt' ? 'Limite atingido' : 'Limit reached',
         locale === 'pt'
-          ? `A versão gratuita permite até ${FREE_CALENDAR_LIMIT} calendários. Faz upgrade para Pro para adicionar mais.`
-          : `The free version allows up to ${FREE_CALENDAR_LIMIT} calendars. Upgrade to Pro for unlimited calendars.`,
+          ? `A versão gratuita permite até ${FREE_CALENDAR_LIMIT} calendários.`
+          : `The free version allows up to ${FREE_CALENDAR_LIMIT} calendars.`,
         [
           { text: locale === 'pt' ? 'Cancelar' : 'Cancel', style: 'cancel' },
           { text: '⭐ Pro', onPress: () => router.push('/upgrade') },
@@ -77,12 +73,8 @@ export default function CalendarsScreen() {
     setSaving(true);
     try {
       const source: CalendarSource = {
-        id:       Date.now().toString(),
-        name:     name.trim(),
-        url:      url.trim(),
-        platform,
-        color:    PLATFORM_COLORS[platform],
-        active:   true,
+        id: Date.now().toString(), name: name.trim(),
+        url: url.trim(), platform, color: PLATFORM_COLORS[platform], active: true,
       };
       const count = await addSource(source);
       setModalVisible(false);
@@ -95,10 +87,13 @@ export default function CalendarsScreen() {
     }
   };
 
+  const resetForm = () => { setName(''); setUrl(''); setPlatform('airbnb'); };
+
   const handleDelete = (src: CalendarSource) => {
     Alert.alert(t.calendars.delete_title, t.calendars.delete_msg(src.name), [
       { text: t.calendars.cancel, style: 'cancel' },
-      { text: t.calendars.delete_confirm, style: 'destructive', onPress: () => removeSource(src.id) },
+      { text: t.calendars.delete_confirm, style: 'destructive',
+        onPress: () => removeSource(src.id) },
     ]);
   };
 
@@ -116,63 +111,66 @@ export default function CalendarsScreen() {
     <View className="flex-1 bg-slate-950">
       <OfflineBanner />
 
-      {/* Barra de limite (só na versão free) */}
-      {!isPro && (
-        <View className="mx-4 mt-3 mb-1 bg-slate-900 rounded-xl px-4 py-3">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-slate-400 text-xs font-medium">
-              {locale === 'pt'
-                ? `Calendários: ${sources.length} / ${FREE_CALENDAR_LIMIT}`
-                : `Calendars: ${sources.length} / ${FREE_CALENDAR_LIMIT}`}
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/upgrade')}>
-              <Text className="text-amber-400 text-xs font-semibold">⭐ Pro — ilimitado</Text>
-            </TouchableOpacity>
-          </View>
-          {/* Barra de progresso */}
-          <View className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-            <View
-              className={`h-full rounded-full ${atLimit ? 'bg-red-500' : 'bg-blue-600'}`}
-              style={{ width: `${Math.min((sources.length / FREE_CALENDAR_LIMIT) * 100, 100)}%` }}
-            />
-          </View>
-          {slotsRemaining !== null && slotsRemaining <= 1 && !atLimit && (
-            <Text className="text-amber-600 text-xs mt-1">
-              {locale === 'pt'
-                ? `Último slot disponível.`
-                : `Last slot available.`}
-            </Text>
-          )}
-          {atLimit && (
-            <Text className="text-red-400 text-xs mt-1">
-              {locale === 'pt'
-                ? 'Limite atingido. Faz upgrade para adicionar mais.'
-                : 'Limit reached. Upgrade to add more.'}
-            </Text>
-          )}
-        </View>
-      )}
-
-      <NotificationSettings />
-
       <FlatList
         data={sources}
         keyExtractor={s => s.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}
+        contentContainerStyle={{ paddingBottom: 8 }}
+        ListHeaderComponent={
+          <>
+            {/* Barra de limite (versão free) */}
+            {!isPro && (
+              <View className="mx-4 mt-3 mb-1 bg-slate-900 rounded-xl px-4 py-3">
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text className="text-slate-400 text-xs font-medium">
+                    {locale === 'pt'
+                      ? `Calendários: ${sources.length} / ${FREE_CALENDAR_LIMIT}`
+                      : `Calendars: ${sources.length} / ${FREE_CALENDAR_LIMIT}`}
+                  </Text>
+                  <TouchableOpacity onPress={() => router.push('/upgrade')}>
+                    <Text className="text-amber-400 text-xs font-semibold">⭐ Pro — ilimitado</Text>
+                  </TouchableOpacity>
+                </View>
+                <View className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <View
+                    className={`h-full rounded-full ${atLimit ? 'bg-red-500' : 'bg-blue-600'}`}
+                    style={{ width: `${Math.min((sources.length / FREE_CALENDAR_LIMIT) * 100, 100)}%` }}
+                  />
+                </View>
+                {atLimit && (
+                  <Text className="text-red-400 text-xs mt-1">
+                    {locale === 'pt' ? 'Limite atingido.' : 'Limit reached.'}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Painel de notificações */}
+            <NotificationSettings />
+
+            {/* Label da lista */}
+            {sources.length > 0 && (
+              <Text className="text-slate-500 text-xs uppercase tracking-widest px-4 pt-4 pb-2">
+                {locale === 'pt' ? 'Calendários activos' : 'Active calendars'}
+              </Text>
+            )}
+          </>
+        }
         ListEmptyComponent={
-          <View className="items-center mt-20 gap-3">
+          <View className="items-center mt-16 gap-3">
             <Ionicons name="link-outline" size={52} color="#334155" />
             <Text className="text-slate-400 text-lg font-semibold">{t.calendars.empty_title}</Text>
             <Text className="text-slate-500 text-sm text-center px-8">{t.calendars.empty_sub}</Text>
           </View>
         }
         renderItem={({ item }) => (
-          <CalendarSourceCard
-            source={item}
-            onSync={handleSync}
-            onToggle={toggle}
-            onDelete={handleDelete}
-          />
+          <View className="mx-4">
+            <CalendarSourceCard
+              source={item}
+              onSync={handleSync}
+              onToggle={toggle}
+              onDelete={handleDelete}
+            />
+          </View>
         )}
       />
 
@@ -209,10 +207,8 @@ export default function CalendarsScreen() {
             </Text>
             <TextInput
               className="bg-slate-800 rounded-xl px-4 py-3 text-slate-100 text-sm mt-1"
-              value={name}
-              onChangeText={setName}
-              placeholder={t.calendars.name_placeholder}
-              placeholderTextColor="#475569"
+              value={name} onChangeText={setName}
+              placeholder={t.calendars.name_placeholder} placeholderTextColor="#475569"
             />
 
             <Text className="text-slate-500 text-xs uppercase tracking-widest mt-3">
@@ -220,13 +216,9 @@ export default function CalendarsScreen() {
             </Text>
             <TextInput
               className="bg-slate-800 rounded-xl px-4 py-3 text-slate-100 text-sm mt-1"
-              value={url}
-              onChangeText={setUrl}
-              placeholder={t.calendars.url_placeholder}
-              placeholderTextColor="#475569"
-              autoCapitalize="none"
-              keyboardType="url"
-              autoCorrect={false}
+              value={url} onChangeText={setUrl}
+              placeholder={t.calendars.url_placeholder} placeholderTextColor="#475569"
+              autoCapitalize="none" keyboardType="url" autoCorrect={false}
             />
 
             <View className="flex-row gap-3 mt-5">
@@ -238,8 +230,7 @@ export default function CalendarsScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 className={`flex-1 rounded-xl py-3.5 items-center ${saving ? 'bg-blue-800' : 'bg-blue-600'}`}
-                onPress={handleAdd}
-                disabled={saving}
+                onPress={handleAdd} disabled={saving}
               >
                 <Text className="text-white font-bold">
                   {saving ? t.calendars.adding : t.calendars.add}
