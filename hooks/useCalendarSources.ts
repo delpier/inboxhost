@@ -9,6 +9,7 @@ import {
   saveReservations,
 } from '../services/storage';
 import { syncCalendar } from '../services/syncService';
+import { reschedule } from '../services/notificationService';
 import { CalendarSource } from '../types';
 
 export function useCalendarSources() {
@@ -35,6 +36,7 @@ export function useCalendarSources() {
     // Also remove reservations that came from this source
     const all = await getReservations();
     await saveReservations(all.filter(r => r.sourceId !== id));
+    await reschedule();
     await load();
   }, [load]);
 

@@ -24,6 +24,10 @@ export const FEATURES = {
   },
 } as const;
 
+// ─── Chaves do AsyncStorage partilhadas entre contexts e serviços ─────────
+export const PRO_STORAGE_KEY    = 'is_pro_purchased';
+export const LOCALE_STORAGE_KEY = 'app_locale';
+
 export const PRO_PRODUCT_ID = 'com.inboxhost.app.pro';
 export const PRO_PRICE      = '2,99€';
 export const APP_VERSION    = '1.0.0';

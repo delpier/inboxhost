@@ -7,9 +7,10 @@ import {
   saveReservations,
   applyGuestOverrides,
 } from './storage';
+import { reschedule } from './notificationService';
 import { CalendarSource, Reservation } from '../types';
 
-export async function syncCalendar(source: CalendarSource): Promise<number> {
+async function downloadAndMerge(source: CalendarSource): Promise<number> {
   const destUri = `${FileSystem.cacheDirectory}cal_${source.id}.ics`;
 
   const result = await FileSystem.downloadAsync(source.url, destUri);
@@ -51,6 +52,12 @@ export async function syncCalendar(source: CalendarSource): Promise<number> {
   return merged.length;
 }
 
+export async function syncCalendar(source: CalendarSource): Promise<number> {
+  const count = await downloadAndMerge(source);
+  await reschedule();
+  return count;
+}
+
 export async function syncAllCalendars(): Promise<{ ok: number; failed: number }> {
   const sources = await getCalendarSources();
   const active  = sources.filter(s => s.active);
@@ -61,11 +68,13 @@ export async function syncAllCalendars(): Promise<{ ok: number; failed: number }
   let failed = 0;
   for (const source of active) {
     try {
-      await syncCalendar(source);
+      await downloadAndMerge(source);
       ok++;
     } catch {
       failed++;
     }
   }
+  // Uma só reprogramação das notificações no fim
+  await reschedule();
   return { ok, failed };
 }

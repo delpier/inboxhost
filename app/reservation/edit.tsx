@@ -7,6 +7,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useI18n } from '../../i18n';
 import { getReservations, updateGuestDetails } from '../../services/storage';
+import { reschedule } from '../../services/notificationService';
 import { Reservation } from '../../types';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -81,6 +82,7 @@ export default function EditGuestScreen() {
         guestEmail: email.trim(),
         numGuests:  Number.isFinite(guests) && guests > 0 ? guests : undefined,
       });
+      reschedule(); // o nome do hóspede aparece nas notificações
       router.back();
     } finally {
       setSaving(false);

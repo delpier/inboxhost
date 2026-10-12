@@ -130,6 +130,21 @@ const pt = {
       text: 'Olá {name}! Obrigado pela estadia em {property}. Se gostou, uma avaliação ajuda-nos muito. Boa viagem!',
     },
   },
+  // Local notifications (Pro)
+  notifications: {
+    title: 'Notificações de check-in',
+    subtitle: '2 dias e 1 dia antes e no dia do check-in (09:00) · dia do check-out (08:00)',
+    pro_only: 'Disponível na versão Pro',
+    denied: 'As notificações estão bloqueadas. Ativa-as nas Definições do Android.',
+    open_settings: 'Abrir definições',
+    checkin_2d: (name: string) => `Check-in daqui a 2 dias — ${name}`,
+    checkin_1d: (name: string) => `Check-in amanhã — ${name}`,
+    checkin_today: (name: string) => `Check-in hoje — ${name}`,
+    checkout_today: (name: string) => `Check-out hoje — ${name}`,
+    checkin_body: (property: string, nights: string) => `${property} · ${nights}`,
+    checkout_body: (property: string) => `O hóspede sai hoje de ${property}. Prepara a limpeza.`,
+    channel_name: 'Check-ins e check-outs',
+  },
   // Network
   network: {
     offline: 'Sem ligação à internet',
@@ -272,6 +287,20 @@ const en: Translations = {
       label: 'Ask for review',
       text: 'Hi {name}! Thank you for staying at {property}. If you enjoyed it, a review would help us a lot. Safe travels!',
     },
+  },
+  notifications: {
+    title: 'Check-in notifications',
+    subtitle: '2 days and 1 day before and on check-in day (09:00) · check-out day (08:00)',
+    pro_only: 'Available in the Pro version',
+    denied: 'Notifications are blocked. Enable them in Android Settings.',
+    open_settings: 'Open settings',
+    checkin_2d: (name: string) => `Check-in in 2 days — ${name}`,
+    checkin_1d: (name: string) => `Check-in tomorrow — ${name}`,
+    checkin_today: (name: string) => `Check-in today — ${name}`,
+    checkout_today: (name: string) => `Check-out today — ${name}`,
+    checkin_body: (property: string, nights: string) => `${property} · ${nights}`,
+    checkout_body: (property: string) => `The guest leaves ${property} today. Time to prepare the cleaning.`,
+    channel_name: 'Check-ins and check-outs',
   },
   network: {
     offline: 'No internet connection',

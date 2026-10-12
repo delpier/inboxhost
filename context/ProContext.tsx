@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const PRO_KEY = 'is_pro_purchased';
+import { PRO_STORAGE_KEY as PRO_KEY } from '../constants/config';
 
 interface ProContextType {
   isPro: boolean;

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { translations, Locale, Translations } from './translations';
+import { LOCALE_STORAGE_KEY as LOCALE_KEY } from '../constants/config';
 
 interface I18nContextType {
   locale: Locale;
@@ -13,8 +14,6 @@ const I18nContext = createContext<I18nContextType>({
   t: translations.pt,
   setLocale: () => {},
 });
-
-const LOCALE_KEY = 'app_locale';
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('pt');

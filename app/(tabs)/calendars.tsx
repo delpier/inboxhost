@@ -9,6 +9,7 @@ import { useCalendarSources } from '../../hooks/useCalendarSources';
 import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
 import { OfflineBanner } from '../../components/OfflineBanner';
+import { NotificationSettings } from '../../components/NotificationSettings';
 import { useNetwork } from '../../hooks/useNetwork';
 import { usePro } from '../../context/ProContext';
 import { HeaderActions } from './_layout';
@@ -150,7 +151,8 @@ export default function CalendarsScreen() {
           )}
         </View>
       )}
- 
+
+      <NotificationSettings />
 
       <FlatList
         data={sources}
