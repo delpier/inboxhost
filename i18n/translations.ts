@@ -22,6 +22,9 @@ const pt = {
     sync_error: 'Erro',
     sync_error_msg: 'Falha ao sincronizar.',
     nights: (n: number) => n === 1 ? '1 noite' : `${n} noites`,
+    view_list: 'Lista',
+    view_calendar: 'Calendário',
+    day_empty: 'Sem reservas neste dia',
   },
   // Calendars screen
   calendars: {
@@ -186,6 +189,9 @@ const en: Translations = {
     sync_error: 'Error',
     sync_error_msg: 'Failed to sync.',
     nights: (n: number) => n === 1 ? '1 night' : `${n} nights`,
+    view_list: 'List',
+    view_calendar: 'Calendar',
+    day_empty: 'No reservations on this day',
   },
   calendars: {
     title: 'Calendars',

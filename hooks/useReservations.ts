@@ -3,7 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { getReservations } from '../services/storage';
 import { syncAllCalendars } from '../services/syncService';
 import { Reservation } from '../types';
-import { isPast, parseISO } from 'date-fns';
+import { isReservationPast } from '../utils/reservation';
 
 export type ReservationFilter = 'all' | 'upcoming' | 'past';
 
@@ -56,7 +56,7 @@ export function useReservations(filter: ReservationFilter = 'all') {
   // Apply filter in memory — storage always has everything
   const reservations = allReservations.filter(r => {
     if (filter === 'all') return true;
-    const past = isPast(parseISO(r.checkOut));
+    const past = isReservationPast(r);
     return filter === 'past' ? past : !past;
   });
 

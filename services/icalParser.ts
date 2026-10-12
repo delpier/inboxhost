@@ -14,8 +14,8 @@ const BLOCKED_SUMMARIES = [
   'hold',
 ];
 
-function isBlockedEvent(summary: string): boolean {
-  const lower = summary.toLowerCase().trim();
+export function isBlockedEvent(summary: string): boolean {
+  const lower = (summary ?? '').toLowerCase().trim();
   return BLOCKED_SUMMARIES.some(blocked => lower.includes(blocked));
 }
 

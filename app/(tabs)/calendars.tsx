@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
-  Modal, TextInput, Alert, Switch,
+  Modal, TextInput, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useNavigation } from 'expo-router';
@@ -10,6 +10,7 @@ import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
 import { OfflineBanner } from '../../components/OfflineBanner';
 import { NotificationSettings } from '../../components/NotificationSettings';
+import { CalendarSourceCard } from '../../components/CalendarSourceCard';
 import { useNetwork } from '../../hooks/useNetwork';
 import { usePro } from '../../context/ProContext';
 import { HeaderActions } from './_layout';
@@ -166,53 +167,12 @@ export default function CalendarsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View className="bg-slate-900 rounded-xl px-4 py-3 mb-2">
-            <View className="flex-row items-center gap-3">
-              {/* Cor da plataforma */}
-              <View className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: item.color }} />
-
-              {/* Info */}
-              <View className="flex-1 min-w-0">
-                <Text className="text-slate-100 text-sm font-semibold">{item.name}</Text>
-                <Text className="text-slate-600 text-xs" numberOfLines={1}>{item.url}</Text>
-                {item.lastSync ? (
-                  <Text className="text-slate-700 text-xs mt-0.5">
-                    {t.calendars.last_sync}: {new Date(item.lastSync).toLocaleString(
-                      locale === 'pt' ? 'pt-PT' : 'en-GB'
-                    )}
-                  </Text>
-                ) : null}
-              </View>
-
-              {/* Acções */}
-              {/* Editar */}
-              <TouchableOpacity
-                onPress={() => router.push(`/calendar/edit?id=${item.id}`)}
-                className="p-1.5"
-              >
-                <Ionicons name="pencil-outline" size={17} color="#64748B" />
-              </TouchableOpacity>
-
-              {/* Sync */}
-              <TouchableOpacity onPress={() => handleSync(item)} className="p-1.5">
-                <Ionicons name="sync-outline" size={17} color="#2563EB" />
-              </TouchableOpacity>
-
-              {/* Toggle */}
-              <Switch
-                value={item.active}
-                onValueChange={() => toggle(item.id)}
-                trackColor={{ false: '#334155', true: '#1d4ed8' }}
-                thumbColor={item.active ? '#2563EB' : '#64748B'}
-              />
-
-              {/* Apagar */}
-              <TouchableOpacity onPress={() => handleDelete(item)} className="p-1.5">
-                <Ionicons name="trash-outline" size={17} color="#EF4444" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <CalendarSourceCard
+            source={item}
+            onSync={handleSync}
+            onToggle={toggle}
+            onDelete={handleDelete}
+          />
         )}
       />
 

@@ -6,7 +6,8 @@ import {
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { format, parseISO, differenceInDays, isToday, isTomorrow, isPast } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
+import { getReservationPhase } from '../../utils/reservation';
 import { pt, enUS } from 'date-fns/locale';
 import {
   getReservations,
@@ -28,11 +29,13 @@ import {
 import { Reservation, Message, MessageChannel, PLATFORM_ICONS, PLATFORM_LABELS } from '../../types';
 
 function getStatusInfo(checkIn: string, checkOut: string, t: any) {
-  if (isPast(parseISO(checkOut)))    return { label: t.detail.status_past,     color: 'bg-slate-700',   text: 'text-slate-300' };
-  if (isToday(parseISO(checkIn)))    return { label: t.detail.status_today,    color: 'bg-emerald-900', text: 'text-emerald-400' };
-  if (isTomorrow(parseISO(checkIn))) return { label: t.detail.status_tomorrow, color: 'bg-amber-900',   text: 'text-amber-400' };
-  if (!isPast(parseISO(checkIn)))    return { label: t.detail.status_upcoming,  color: 'bg-blue-900',    text: 'text-blue-400' };
-  return                                    { label: t.detail.status_active,    color: 'bg-emerald-900', text: 'text-emerald-400' };
+  switch (getReservationPhase({ checkIn, checkOut })) {
+    case 'past':     return { label: t.detail.status_past,     color: 'bg-slate-700',   text: 'text-slate-300' };
+    case 'today':    return { label: t.detail.status_today,    color: 'bg-emerald-900', text: 'text-emerald-400' };
+    case 'tomorrow': return { label: t.detail.status_tomorrow, color: 'bg-amber-900',   text: 'text-amber-400' };
+    case 'upcoming': return { label: t.detail.status_upcoming, color: 'bg-blue-900',    text: 'text-blue-400' };
+    default:         return { label: t.detail.status_active,   color: 'bg-emerald-900', text: 'text-emerald-400' };
+  }
 }
 
 function InfoRow({ label, value, icon }: { label: string; value: string; icon?: string }) {
