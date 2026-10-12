@@ -95,6 +95,41 @@ const pt = {
     error_phone: 'Telefone inválido.',
     saved: 'Dados do hóspede guardados.',
   },
+  // Sending messages (WhatsApp / SMS / email)
+  messaging: {
+    templates: 'Modelos',
+    send_via: 'Enviar por',
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    email: 'Email',
+    no_phone: 'Este hóspede não tem telefone. Adiciona-o para enviar por WhatsApp ou SMS.',
+    no_email: 'Este hóspede não tem email. Adiciona-o para enviar por email.',
+    add_contact: 'Adicionar contacto',
+    empty_text: 'Escreve uma mensagem ou escolhe um modelo.',
+    open_failed: (channel: string) => `Não foi possível abrir o ${channel}. Confirma que a app está instalada.`,
+    subject: (property: string) => `A sua reserva — ${property}`,
+    property_fallback: 'o alojamento',
+    hint: 'A mensagem é enviada pela app escolhida e fica registada aqui.',
+  },
+  // Message templates — {name} {property} {checkIn} {checkOut} {nights}
+  templates: {
+    welcome: {
+      label: 'Boas-vindas',
+      text: 'Olá {name}! Obrigado por reservar {property}. Estamos ao dispor para qualquer questão até à sua chegada, {checkIn}.',
+    },
+    checkin: {
+      label: 'Check-in',
+      text: 'Olá {name}! O seu check-in é {checkIn}. Envio em breve as instruções de acesso. Pode indicar-nos a hora prevista de chegada?',
+    },
+    checkout: {
+      label: 'Check-out',
+      text: 'Olá {name}! Lembramos que o check-out é {checkOut}. Esperamos que tenha gostado da estadia em {property}!',
+    },
+    review: {
+      label: 'Pedir avaliação',
+      text: 'Olá {name}! Obrigado pela estadia em {property}. Se gostou, uma avaliação ajuda-nos muito. Boa viagem!',
+    },
+  },
   // Network
   network: {
     offline: 'Sem ligação à internet',
@@ -204,6 +239,39 @@ const en: Translations = {
     error_email: 'Invalid email.',
     error_phone: 'Invalid phone number.',
     saved: 'Guest details saved.',
+  },
+  messaging: {
+    templates: 'Templates',
+    send_via: 'Send via',
+    whatsapp: 'WhatsApp',
+    sms: 'SMS',
+    email: 'Email',
+    no_phone: 'This guest has no phone number. Add one to send via WhatsApp or SMS.',
+    no_email: 'This guest has no email. Add one to send via email.',
+    add_contact: 'Add contact',
+    empty_text: 'Write a message or pick a template.',
+    open_failed: (channel: string) => `Could not open ${channel}. Make sure the app is installed.`,
+    subject: (property: string) => `Your reservation — ${property}`,
+    property_fallback: 'the property',
+    hint: 'The message is sent by the chosen app and logged here.',
+  },
+  templates: {
+    welcome: {
+      label: 'Welcome',
+      text: 'Hi {name}! Thank you for booking {property}. Let us know if you have any questions before your arrival on {checkIn}.',
+    },
+    checkin: {
+      label: 'Check-in',
+      text: 'Hi {name}! Your check-in is on {checkIn}. I will send the access instructions shortly. Could you let us know your expected arrival time?',
+    },
+    checkout: {
+      label: 'Check-out',
+      text: 'Hi {name}! Just a reminder that check-out is on {checkOut}. We hope you enjoyed your stay at {property}!',
+    },
+    review: {
+      label: 'Ask for review',
+      text: 'Hi {name}! Thank you for staying at {property}. If you enjoyed it, a review would help us a lot. Safe travels!',
+    },
   },
   network: {
     offline: 'No internet connection',

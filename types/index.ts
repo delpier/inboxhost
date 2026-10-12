@@ -49,11 +49,15 @@ export type GuestOverrides = Partial<
   Pick<Reservation, 'guestName' | 'guestEmail' | 'guestPhone' | 'numGuests'>
 >;
 
+// Canal usado para enviar a mensagem (a app abre a app do sistema)
+export type MessageChannel = 'whatsapp' | 'sms' | 'email';
+
 export interface Message {
   id: string;
   reservationId: string;
   text: string;
   direction: 'sent' | 'received';
+  channel?: MessageChannel;
   timestamp: string;
   read: boolean;
 }

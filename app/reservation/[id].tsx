@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
-  KeyboardAvoidingView, Platform, Linking, ScrollView,
+  KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO, differenceInDays, isToday, isTomorrow, isPast } from 'date-fns';
@@ -15,7 +16,16 @@ import {
 } from '../../services/storage';
 import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
-import { Reservation, Message, PLATFORM_ICONS, PLATFORM_LABELS } from '../../types';
+import { MessageBubble, CHANNEL_ICONS } from '../../components/MessageBubble';
+import {
+  CHANNELS,
+  TEMPLATE_KEYS,
+  TemplateKey,
+  canUseChannel,
+  fillTemplate,
+  openMessageChannel,
+} from '../../services/messageService';
+import { Reservation, Message, MessageChannel, PLATFORM_ICONS, PLATFORM_LABELS } from '../../types';
 
 function getStatusInfo(checkIn: string, checkOut: string, t: any) {
   if (isPast(parseISO(checkOut)))    return { label: t.detail.status_past,     color: 'bg-slate-700',   text: 'text-slate-300' };
@@ -59,22 +69,57 @@ export default function ReservationDetail() {
   // Recarrega ao voltar do ecrã de edição
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const sendMessage = async () => {
-    if (!input.trim() || !reservation || sending) return;
+  const applyTemplate = (key: TemplateKey) => {
+    if (!reservation) return;
+    setInput(fillTemplate(t.templates[key].text, reservation, t, locale));
+  };
+
+  // Abre a app escolhida com o texto pré-preenchido e regista a mensagem
+  const sendVia = async (channel: MessageChannel) => {
+    if (!reservation || sending) return;
+    const text = input.trim();
+    if (!text) return Alert.alert(t.calendars.attention, t.messaging.empty_text);
+
+    if (!canUseChannel(channel, reservation)) {
+      Alert.alert(
+        t.calendars.attention,
+        channel === 'email' ? t.messaging.no_email : t.messaging.no_phone,
+        [
+          { text: t.calendars.cancel, style: 'cancel' },
+          { text: t.messaging.add_contact, onPress: goToEdit },
+        ]
+      );
+      return;
+    }
+
     setSending(true);
-    const msg: Message = {
-      id:            Date.now().toString(),
-      reservationId: reservation.id,
-      text:          input.trim(),
-      direction:     'sent',
-      timestamp:     new Date().toISOString(),
-      read:          true,
-    };
-    await addMessageToReservation(reservation.id, msg);
-    setInput('');
-    await load();
-    setSending(false);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    try {
+      const subject = t.messaging.subject(reservation.property || t.messaging.property_fallback);
+      const opened  = await openMessageChannel(channel, reservation, text, subject);
+      if (!opened) {
+        Alert.alert(t.calendars.attention, t.messaging.open_failed(t.messaging[channel]));
+        return;
+      }
+      const msg: Message = {
+        id:            Date.now().toString(),
+        reservationId: reservation.id,
+        text,
+        direction:     'sent',
+        channel,
+        timestamp:     new Date().toISOString(),
+        read:          true,
+      };
+      await addMessageToReservation(reservation.id, msg);
+      setInput('');
+      await load();
+      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const goToEdit = () => {
+    if (reservation) router.push(`/reservation/edit?id=${encodeURIComponent(reservation.id)}`);
   };
 
   if (!reservation) {
@@ -124,18 +169,13 @@ export default function ReservationDetail() {
     </Text>
   </TouchableOpacity>
 )}
-          {reservation.guestEmail ? (
-            <TouchableOpacity onPress={() => Linking.openURL(`mailto:${reservation.guestEmail}`)} className="p-1">
-              <Ionicons name="mail-outline" size={22} color="#2563EB" />
-            </TouchableOpacity>
-          ) : null}
           {reservation.guestPhone ? (
             <TouchableOpacity onPress={() => Linking.openURL(`tel:${reservation.guestPhone}`)} className="p-1">
               <Ionicons name="call-outline" size={22} color="#10B981" />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
-            onPress={() => router.push(`/reservation/edit?id=${encodeURIComponent(reservation.id)}`)}
+            onPress={goToEdit}
             className="p-1"
             accessibilityLabel={t.detail.edit}
           >
@@ -212,42 +252,63 @@ export default function ReservationDetail() {
             <Text className="text-slate-600 text-sm">{t.detail.no_messages}</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <View className={`mb-2 max-w-xs ${item.direction === 'sent' ? 'self-end' : 'self-start'}`}>
-            <View className={`rounded-2xl px-3.5 py-2.5 ${
-              item.direction === 'sent' ? 'bg-blue-600 rounded-br-sm' : 'bg-slate-800 rounded-bl-sm'
-            }`}>
-              <Text className="text-slate-100 text-sm leading-5">{item.text}</Text>
-            </View>
-            <Text className={`text-slate-600 text-xs mt-0.5 ${
-              item.direction === 'sent' ? 'text-right' : 'text-left'
-            }`}>
-              {format(parseISO(item.timestamp), 'HH:mm')}
-            </Text>
-          </View>
-        )}
+        renderItem={({ item }) => <MessageBubble message={item} />}
       />
 
-      {/* Input */}
-      <View className="flex-row items-end gap-2 px-3 py-3 bg-slate-900 border-t border-slate-800">
+      {/* Composer: modelos + texto + canal de envio */}
+      <View className="px-3 pt-2 pb-3 bg-slate-900 border-t border-slate-800 gap-2">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ gap: 6 }}
+        >
+          {TEMPLATE_KEYS.map(key => (
+            <TouchableOpacity
+              key={key}
+              onPress={() => applyTemplate(key)}
+              className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700"
+            >
+              <Text className="text-slate-300 text-xs">{t.templates[key].label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         <TextInput
-          className="flex-1 bg-slate-800 rounded-2xl px-4 py-2.5 text-slate-100 text-sm max-h-24"
+          className="bg-slate-800 rounded-2xl px-4 py-2.5 text-slate-100 text-sm max-h-32"
           value={input}
           onChangeText={setInput}
           placeholder={t.detail.placeholder}
           placeholderTextColor="#475569"
           multiline
-          blurOnSubmit={false}
         />
-        <TouchableOpacity
-          className={`w-11 h-11 rounded-full items-center justify-center ${
-            input.trim() ? 'bg-blue-600' : 'bg-slate-800'
-          }`}
-          onPress={sendMessage}
-          disabled={!input.trim() || sending}
-        >
-          <Ionicons name="send" size={18} color={input.trim() ? '#fff' : '#475569'} />
-        </TouchableOpacity>
+
+        <View className="flex-row items-center gap-2">
+          <Text className="text-slate-500 text-xs mr-1">{t.messaging.send_via}</Text>
+          {CHANNELS.map(channel => {
+            const available = canUseChannel(channel, reservation);
+            const active    = available && !!input.trim() && !sending;
+            return (
+              <TouchableOpacity
+                key={channel}
+                onPress={() => sendVia(channel)}
+                disabled={sending}
+                className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-2.5 ${
+                  active ? 'bg-blue-600' : 'bg-slate-800'
+                } ${available ? '' : 'opacity-50'}`}
+              >
+                <Ionicons
+                  name={CHANNEL_ICONS[channel]}
+                  size={16}
+                  color={active ? '#fff' : '#64748B'}
+                />
+                <Text className={`text-xs font-semibold ${active ? 'text-white' : 'text-slate-500'}`}>
+                  {t.messaging[channel]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       <AdBanner />

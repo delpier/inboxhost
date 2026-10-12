@@ -6,6 +6,7 @@ import { pt, enUS } from 'date-fns/locale';
 import { useReservations } from '../../hooks/useReservations';
 import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
+import { CHANNEL_ICONS } from '../../components/MessageBubble';
 import { Reservation, PLATFORM_ICONS } from '../../types';
 
 function getInitials(name: string): string {
@@ -42,11 +43,16 @@ function ThreadItem({ item }: { item: Reservation }) {
             </Text>
           ) : null}
         </View>
-        <Text className={`text-xs mt-0.5 ${unread > 0 ? 'text-slate-300' : 'text-slate-500'}`} numberOfLines={1}>
-          {lastMsg
-            ? `${lastMsg.direction === 'sent' ? `${t.messages.you}: ` : ''}${lastMsg.text}`
-            : t.messages.no_messages}
-        </Text>
+        <View className="flex-row items-center gap-1 mt-0.5">
+          {lastMsg?.channel ? (
+            <Ionicons name={CHANNEL_ICONS[lastMsg.channel]} size={12} color="#64748B" />
+          ) : null}
+          <Text className={`flex-1 text-xs ${unread > 0 ? 'text-slate-300' : 'text-slate-500'}`} numberOfLines={1}>
+            {lastMsg
+              ? `${lastMsg.direction === 'sent' ? `${t.messages.you}: ` : ''}${lastMsg.text}`
+              : t.messages.no_messages}
+          </Text>
+        </View>
       </View>
       {unread > 0 ? (
         <View className="w-5 h-5 bg-blue-600 rounded-full items-center justify-center">
