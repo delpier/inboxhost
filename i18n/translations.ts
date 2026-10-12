@@ -25,6 +25,12 @@ const pt = {
     view_list: 'Lista',
     view_calendar: 'Calendário',
     day_empty: 'Sem reservas neste dia',
+    prev_month: 'Mês anterior',
+    next_month: 'Mês seguinte',
+    today: 'Hoje',
+    legend_available: 'Livre',
+    legend_booked: 'Reservado',
+    legend_selected: 'Selecionado',
   },
   // Calendars screen
   calendars: {
@@ -192,6 +198,12 @@ const en: Translations = {
     view_list: 'List',
     view_calendar: 'Calendar',
     day_empty: 'No reservations on this day',
+    prev_month: 'Previous month',
+    next_month: 'Next month',
+    today: 'Today',
+    legend_available: 'Available',
+    legend_booked: 'Booked',
+    legend_selected: 'Selected',
   },
   calendars: {
     title: 'Calendars',
