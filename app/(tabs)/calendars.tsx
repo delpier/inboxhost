@@ -26,7 +26,7 @@ const PLATFORM_EMOJI: Record<Platform, string> = {
 export default function CalendarsScreen() {
   const { t, locale } = useI18n();
   const { isConnected } = useNetwork();
-  const { isPro ,deactivatePro } = usePro();
+  const { isPro } = usePro();
   const navigation = useNavigation();
   const { sources, addSource, removeSource, toggle, syncSource } = useCalendarSources();
 
@@ -112,14 +112,8 @@ export default function CalendarsScreen() {
 
   return (
     <View className="flex-1 bg-slate-950">
-      <OfflineBanner /> <View className='bg-red-400'> 
-    
-    <Text className='flex-row text-wrap text-white text-xs'>     
-      <TouchableOpacity onPress={deactivatePro}>
-        <Text className='text-white'> DESACTIVAR PRO - TEST</Text> 
-      </TouchableOpacity>
-   
-        </Text></View>
+      <OfflineBanner />
+
       {/* Barra de limite (só na versão free) */}
       {!isPro && (
         <View className="mx-4 mt-3 mb-1 bg-slate-900 rounded-xl px-4 py-3">
