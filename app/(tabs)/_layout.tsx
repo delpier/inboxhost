@@ -1,8 +1,9 @@
 import { Tabs, router } from 'expo-router';
-import { TouchableOpacity, Text, View } from 'react-native';
+import { TouchableOpacity, Text, View, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../../i18n';
-import { usePro } from '../../context/ProContext';
+import { usePro } from '../../context/ProContext'
 
 function HeaderActions({ onAdd, onSync }: { onAdd?: () => void; onSync?: () => void }) {
   const { locale, setLocale } = useI18n();
@@ -10,7 +11,6 @@ function HeaderActions({ onAdd, onSync }: { onAdd?: () => void; onSync?: () => v
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 12 }}>
-      {/* Pro badge */}
       {!isPro && (
         <TouchableOpacity
           onPress={() => router.push('/upgrade')}
@@ -19,8 +19,6 @@ function HeaderActions({ onAdd, onSync }: { onAdd?: () => void; onSync?: () => v
           <Text style={{ fontSize: 11, color: '#FBBF24', fontWeight: '600' }}>⭐ Pro</Text>
         </TouchableOpacity>
       )}
-
-      {/* Action buttons (sync or add) */}
       {onSync && (
         <TouchableOpacity
           onPress={onSync}
@@ -37,8 +35,6 @@ function HeaderActions({ onAdd, onSync }: { onAdd?: () => void; onSync?: () => v
           <Ionicons name="add" size={18} color="#fff" />
         </TouchableOpacity>
       )}
-
-      {/* Language toggle */}
       <TouchableOpacity
         onPress={() => setLocale(locale === 'pt' ? 'en' : 'pt')}
         style={{ padding: 6, borderRadius: 20, backgroundColor: '#1E293B' }}
@@ -49,11 +45,14 @@ function HeaderActions({ onAdd, onSync }: { onAdd?: () => void; onSync?: () => v
   );
 }
 
-// Exportamos o componente para ser usado nos ecrãs via navigation.setOptions
 export { HeaderActions };
 
 export default function TabsLayout() {
-  const { t } = useI18n();
+  const { t }  = useI18n();
+  const insets = useSafeAreaInsets();
+
+  // Altura da tab bar: ícone + label + padding + safe area bottom
+  const tabBarHeight = 64 + insets.bottom;
 
   return (
     <Tabs
@@ -63,18 +62,22 @@ export default function TabsLayout() {
         headerTintColor:         '#F1F5F9',
         headerTitleStyle:        { fontWeight: '700', fontSize: 18 },
         headerShadowVisible:     false,
-        // Default header right — só linguagem e Pro
-        headerRight: () => <HeaderActions />,
+        headerRight:             () => <HeaderActions />,
         tabBarActiveTintColor:   '#2563EB',
         tabBarInactiveTintColor: '#475569',
         tabBarStyle: {
-          backgroundColor: '#0F172A',
-          borderTopColor:  '#1E293B',
-          borderTopWidth:  1,
-          paddingBottom:   4,
-          height:          56,
+          backgroundColor:  '#0F172A',
+          borderTopColor:   '#1E293B',
+          borderTopWidth:   1,
+          height:           tabBarHeight,
+          paddingBottom:    insets.bottom,   // ← empurra os ícones para cima dos botões
+          paddingTop:       8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+        tabBarLabelStyle: {
+          fontSize:     11,
+          fontWeight:   '500',
+          marginBottom: Platform.OS === 'android' ? 4 : 0,
+        },
       }}
     >
       <Tabs.Screen

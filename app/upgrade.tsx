@@ -1,62 +1,102 @@
-import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { usePro } from '../context/ProContext';
 import { useI18n } from '../i18n';
+import { getProProduct, IAPProduct } from '../services/iapService';
+import { PRO_PRICE } from '../constants/config';
 
 const FEATURES = [
-  { icon: 'ban-outline',              pt: 'Sem publicidade',            en: 'No advertisements'       },
-  { icon: 'link-outline',             pt: 'Calendários ilimitados',     en: 'Unlimited calendars'     },
-  { icon: 'notifications-outline',    pt: 'Notificações de check-in',   en: 'Check-in notifications'  },
-  { icon: 'sync-outline',             pt: 'Sincronização automática',   en: 'Automatic sync'          },
-  { icon: 'document-text-outline',    pt: 'Exportar relatórios',        en: 'Export reports'          },
-  { icon: 'heart-outline',            pt: 'Suporte ao desenvolvimento', en: 'Support development'     },
+  { icon: 'ban-outline',           pt: 'Sem publicidade',            en: 'No advertisements'       },
+  { icon: 'link-outline',          pt: 'Calendários ilimitados',     en: 'Unlimited calendars'     },
+  { icon: 'notifications-outline', pt: 'Notificações de check-in',   en: 'Check-in notifications'  },
+  { icon: 'sync-outline',          pt: 'Sincronização automática',   en: 'Automatic sync'          },
+  { icon: 'document-text-outline', pt: 'Exportar relatórios',        en: 'Export reports'          },
+  { icon: 'heart-outline',         pt: 'Suporte ao desenvolvimento', en: 'Support development'     },
 ];
 
 export default function UpgradeScreen() {
-  const { isPro, activatePro } = usePro();   // ← usa o context, não o hook local
+  const { isPro, purchasePro, restorePurchases, activatePro } = usePro();
   const { locale } = useI18n();
 
+  const [product,   setProduct]   = useState<IAPProduct | null>(null);
+  const [buying,    setBuying]    = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  // Tenta obter o preço real da Play Store
+  useEffect(() => {
+    getProProduct().then(setProduct);
+  }, []);
+
+  const displayPrice = product?.localizedPrice ?? PRO_PRICE;
+
   const handlePurchase = async () => {
-    // TODO: substituir por expo-iap quando integrado com a Play Store
-    Alert.alert(
-      'InboxHost Pro',
-      locale === 'pt'
-        ? 'Integração de pagamento em breve.\nActivar modo Pro para teste?'
-        : 'Payment integration coming soon.\nActivate Pro mode for testing?',
-      [
-        { text: locale === 'pt' ? 'Cancelar' : 'Cancel', style: 'cancel' },
-        {
-          text: locale === 'pt' ? 'Activar (teste)' : 'Activate (test)',
-          onPress: async () => {
-            await activatePro();  // ← actualiza o ProContext globalmente
-            Alert.alert(
-              'InboxHost Pro ⭐',
-              locale === 'pt' ? 'Modo Pro activado!' : 'Pro mode activated!',
-              [{ text: 'OK', onPress: () => router.back() }]
-            );
-          },
-        },
-      ]
-    );
+    setBuying(true);
+    try {
+      if (!product) {
+        // IAP não disponível — modo desenvolvimento
+        Alert.alert(
+          'InboxHost Pro',
+          locale === 'pt'
+            ? 'IAP não disponível neste build.\nActivar modo Pro para teste?'
+            : 'IAP not available in this build.\nActivate Pro mode for testing?',
+          [
+            { text: locale === 'pt' ? 'Cancelar' : 'Cancel', style: 'cancel' },
+            {
+              text: locale === 'pt' ? 'Activar (teste)' : 'Activate (test)',
+              onPress: async () => {
+                await activatePro();
+                Alert.alert('⭐ Pro', locale === 'pt' ? 'Activado!' : 'Activated!',
+                  [{ text: 'OK', onPress: () => router.back() }]);
+              },
+            },
+          ]
+        );
+        return;
+      }
+
+      const success = await purchasePro();
+      if (success) {
+        // O listener no usePro já actualizou isPro — navega de volta
+        router.back();
+      }
+    } catch {
+      Alert.alert(
+        locale === 'pt' ? 'Erro' : 'Error',
+        locale === 'pt' ? 'Não foi possível completar a compra.' : 'Could not complete the purchase.'
+      );
+    } finally {
+      setBuying(false);
+    }
   };
 
-  const handleRestore = () => {
-    Alert.alert(
-      locale === 'pt' ? 'Restaurar compra' : 'Restore purchase',
-      locale === 'pt'
-        ? 'Disponível após integração com a Google Play.'
-        : 'Available after Google Play integration.'
-    );
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      Alert.alert(
+        restored
+          ? (locale === 'pt' ? 'Compra restaurada!' : 'Purchase restored!')
+          : (locale === 'pt' ? 'Sem compras anteriores' : 'No previous purchases'),
+        restored
+          ? (locale === 'pt' ? 'InboxHost Pro activado.' : 'InboxHost Pro activated.')
+          : (locale === 'pt' ? 'Nenhuma compra encontrada para esta conta.' : 'No purchase found for this account.')
+      );
+      if (restored) router.back();
+    } catch {
+      Alert.alert(
+        locale === 'pt' ? 'Erro' : 'Error',
+        locale === 'pt' ? 'Não foi possível restaurar.' : 'Could not restore.'
+      );
+    } finally {
+      setRestoring(false);
+    }
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-950"
-      contentContainerStyle={{ paddingBottom: 48 }}
-    >
+    <ScrollView className="flex-1 bg-slate-950" contentContainerStyle={{ paddingBottom: 48 }}>
       <View className="px-6 pt-16 pb-6">
-        {/* Back */}
         <TouchableOpacity onPress={() => router.back()} className="mb-8 self-start">
           <Ionicons name="arrow-back" size={24} color="#94A3B8" />
         </TouchableOpacity>
@@ -69,8 +109,8 @@ export default function UpgradeScreen() {
           <Text className="text-slate-100 text-3xl font-bold">InboxHost Pro</Text>
           <Text className="text-slate-400 text-sm mt-2 text-center px-4">
             {locale === 'pt'
-              ? 'Remove os anúncios, adiciona calendários ilimitados e muito mais'
-              : 'Remove ads, add unlimited calendars and much more'}
+              ? 'Remove os anúncios e desbloqueia todas as funcionalidades'
+              : 'Remove ads and unlock all features'}
           </Text>
         </View>
 
@@ -89,9 +129,7 @@ export default function UpgradeScreen() {
           {FEATURES.map((f, i) => (
             <View
               key={f.icon}
-              className={`flex-row items-center gap-3 py-3 ${
-                i < FEATURES.length - 1 ? 'border-b border-slate-800' : ''
-              }`}
+              className={`flex-row items-center gap-3 py-3 ${i < FEATURES.length - 1 ? 'border-b border-slate-800' : ''}`}
             >
               <View className="w-8 h-8 bg-blue-950 rounded-full items-center justify-center">
                 <Ionicons name={f.icon as any} size={16} color="#2563EB" />
@@ -104,30 +142,40 @@ export default function UpgradeScreen() {
           ))}
         </View>
 
-        {/* Preço */}
+        {/* Preço — vem da Play Store ou do fallback */}
         <View className="items-center mb-6">
           <Text className="text-slate-500 text-sm">
             {locale === 'pt' ? 'Pagamento único · Sem subscrição' : 'One-time payment · No subscription'}
           </Text>
-          <Text className="text-slate-100 text-4xl font-bold mt-1">2,99€</Text>
+          <Text className="text-slate-100 text-4xl font-bold mt-1">{displayPrice}</Text>
         </View>
 
         {/* CTA */}
         {!isPro ? (
           <>
             <TouchableOpacity
-              className="bg-blue-600 rounded-xl py-4 items-center mb-3"
+              className={`rounded-xl py-4 items-center mb-3 ${buying ? 'bg-blue-800' : 'bg-blue-600'}`}
               onPress={handlePurchase}
+              disabled={buying}
               activeOpacity={0.8}
             >
-              <Text className="text-white font-bold text-base">
-                {locale === 'pt' ? 'Comprar InboxHost Pro' : 'Buy InboxHost Pro'}
-              </Text>
+              {buying
+                ? <ActivityIndicator color="#fff" />
+                : <Text className="text-white font-bold text-base">
+                    {locale === 'pt' ? `Comprar — ${displayPrice}` : `Buy — ${displayPrice}`}
+                  </Text>}
             </TouchableOpacity>
-            <TouchableOpacity className="py-3 items-center" onPress={handleRestore}>
-              <Text className="text-slate-500 text-sm">
-                {locale === 'pt' ? 'Restaurar compra anterior' : 'Restore previous purchase'}
-              </Text>
+
+            <TouchableOpacity
+              className="py-3 items-center"
+              onPress={handleRestore}
+              disabled={restoring}
+            >
+              {restoring
+                ? <ActivityIndicator size="small" color="#64748B" />
+                : <Text className="text-slate-500 text-sm">
+                    {locale === 'pt' ? 'Restaurar compra anterior' : 'Restore previous purchase'}
+                  </Text>}
             </TouchableOpacity>
           </>
         ) : (

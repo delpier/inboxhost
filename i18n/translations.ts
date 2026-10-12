@@ -56,7 +56,7 @@ export const translations = {
       empty_title: 'Sem mensagens',
       empty_sub: 'Abre uma reserva para enviar a primeira mensagem',
       you: 'Tu',
-      no_messages: 'Sem mensagens ainda',
+      no_messages: 'Sem notas ainda',
     },
     // Reservation detail
     detail: {
@@ -73,10 +73,11 @@ export const translations = {
       status_past: 'Terminada',
       status_today: 'Check-in hoje',
       status_tomorrow: 'Check-in amanhã',
-      no_messages: 'Sem mensagens ainda',
-      placeholder: 'Escreve uma mensagem...',
+      no_messages: 'Sem notas ainda',
+      placeholder: 'Escreve uma nota interna...',
       not_found: 'Reserva não encontrada',
       source: 'Calendário',
+      internal_notes_title: 'Notas internas'
     },
     // Network
     network: {
@@ -148,7 +149,7 @@ export const translations = {
       empty_title: 'No messages',
       empty_sub: 'Open a reservation to send the first message',
       you: 'You',
-      no_messages: 'No messages yet',
+      no_messages: 'No notes yet',
     },
     detail: {
       checkin: 'Check-in',
@@ -164,10 +165,11 @@ export const translations = {
       status_past: 'Completed',
       status_today: 'Check-in today',
       status_tomorrow: 'Check-in tomorrow',
-      no_messages: 'No messages yet',
-      placeholder: 'Write a message...',
+      no_messages: 'No notes yet',
+      placeholder: 'Write an internal note...',
       not_found: 'Reservation not found',
       source: 'Calendar',
+      internal_notes_title: 'Internal notes'
     },
     network: {
       offline: 'No internet connection',

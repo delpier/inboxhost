@@ -15,6 +15,8 @@ import {
 import { useI18n } from '../../i18n';
 import { AdBanner } from '../../components/AdBanner';
 import { Reservation, Message, PLATFORM_ICONS, PLATFORM_LABELS } from '../../types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 function getStatusInfo(checkIn: string, checkOut: string, t: any) {
   if (isPast(parseISO(checkOut)))    return { label: t.detail.status_past,     color: 'bg-slate-700',   text: 'text-slate-300' };
@@ -45,6 +47,8 @@ export default function ReservationDetail() {
   const [showInfo, setShowInfo]       = useState(true);
   const listRef = useRef<FlatList>(null);
   const dateFnsLocale = locale === 'pt' ? pt : enUS;
+
+const insets = useSafeAreaInsets();
 
   const load = async () => {
     const all = await getReservations();
@@ -105,7 +109,7 @@ export default function ReservationDetail() {
               <View className={`px-2 py-0.5 rounded-full ${status.color}`}>
                 <Text className={`text-xs font-medium ${status.text}`}>{status.label}</Text>
               </View>
-            </View>
+            </View> 
           </View>
 		  {reservation.reservationUrl && (
   <TouchableOpacity
@@ -119,7 +123,10 @@ export default function ReservationDetail() {
         : 'Abrir no Airbnb'} */}
     </Text>
   </TouchableOpacity>
-)}
+ 
+)
+
+}
           {reservation.guestEmail ? (
             <TouchableOpacity onPress={() => Linking.openURL(`mailto:${reservation.guestEmail}`)} className="p-1">
               <Ionicons name="mail-outline" size={22} color="#2563EB" />
@@ -183,7 +190,18 @@ export default function ReservationDetail() {
         </View>
       )}
 
-      {/* Messages */}
+      {/* Messages */} 
+      <View className="mx-4 mb-2 bg-slate-900 rounded-xl px-4 overflow-hidden">
+        <InfoRow label={t.detail.internal_notes_title} value={locale === 'pt'
+            ? 'Notas privadas sobre esta reserva. As mensagens do Airbnb estão na plataforma original.'
+            : 'Private notes about this reservation. Airbnb messages are on the original platform.'} icon="globe-outline" />
+        {/* <View className="py-1">
+          <Text className="text-slate-300 text-sm">{locale === 'pt'
+            ? 'Notas privadas sobre esta reserva. As mensagens do Airbnb estão na plataforma original.'
+            : 'Private notes about this reservation. Airbnb messages are on the original platform.'}</Text>
+        </View> */}
+
+      </View>
       <FlatList
         ref={listRef}
         data={reservation.messages}
@@ -213,6 +231,9 @@ export default function ReservationDetail() {
       />
 
       {/* Input */}
+       <View  style={{ paddingBottom: insets.bottom}}>
+        <AdBanner /> 
+      
       <View className="flex-row items-end gap-2 px-3 py-3 bg-slate-900 border-t border-slate-800">
         <TextInput
           className="flex-1 bg-slate-800 rounded-2xl px-4 py-2.5 text-slate-100 text-sm max-h-24"
@@ -234,7 +255,7 @@ export default function ReservationDetail() {
         </TouchableOpacity>
       </View>
 
-      <AdBanner />
+     </View> 
     </KeyboardAvoidingView>
   );
 }

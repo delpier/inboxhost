@@ -12,19 +12,11 @@
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.inboxhost.app",
-      "buildNumber": "1",
-      "infoPlist": {
-        "NSCameraUsageDescription": "Used for QR code scanning of iCal URLs",
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": false
-        }
-      }
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.inboxhost.app",
@@ -36,7 +28,9 @@
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
-        "RECEIVE_BOOT_COMPLETED"
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -46,20 +40,34 @@
     "plugins": [
       "expo-router",
       [
-        "expo-document-picker",
+        "expo-notifications",
         {
-          "iCloudContainerEnvironment": "Production"
+          "icon": "./assets/images/icon.png",
+          "color": "#2563EB",
+          "defaultChannel": "checkin",
+          "sounds": []
         }
-      ]
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7252216341173493~2224325389"
+        }
+      ],
+      [
+        "expo-document-picker",
+        { "iCloudContainerEnvironment": "Production" }
+      ],
+      "react-native-iap"
     ],
+    
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
         "projectId": "40077294-2c77-4fec-b38e-6cb389860a8d"
-      },
-      "router": {}
+      }
     }
   }
 }
