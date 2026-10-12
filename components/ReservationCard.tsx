@@ -22,7 +22,7 @@ export function ReservationCard({ item }: { item: Reservation }) {
   const phase   = getReservationPhase(item);
   const past    = phase === 'past';
   const unread  = item.messages.filter(m => !m.read && m.direction === 'received').length;
-  const blocked = isBlockedEvent(item.summary);
+  const blocked = isBlockedEvent(item.summary, item.platform);
   const dateFnsLocale = locale === 'pt' ? pt : enUS;
 
   return (

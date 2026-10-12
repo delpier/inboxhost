@@ -14,7 +14,16 @@ const BLOCKED_SUMMARIES = [
   'hold',
 ];
 
-export function isBlockedEvent(summary: string): boolean {
+// O Booking.com exporta TODAS as reservas como "CLOSED - Not available"
+// (sem nome do hóspede) — para o Booking isto é uma reserva, não um bloqueio.
+const BOOKING_RESERVED = /^closed\s*[-–]\s*not available$/i;
+
+export function isBookingReservedSummary(summary: string): boolean {
+  return BOOKING_RESERVED.test((summary ?? '').trim());
+}
+
+export function isBlockedEvent(summary: string, platform?: Platform): boolean {
+  if (platform === 'booking' && isBookingReservedSummary(summary)) return false;
   const lower = (summary ?? '').toLowerCase().trim();
   return BLOCKED_SUMMARIES.some(blocked => lower.includes(blocked));
 }
@@ -84,8 +93,10 @@ function parseAirbnb(desc: string, summary: string): ParsedFields {
 function parseBooking(desc: string, summary: string): ParsedFields {
   const clean = desc.replace(/\\n/g, '\n').replace(/\\,/g, ',');
 
-  // Summary pode ser "BOOKING - John Smith"
-  const nameFromSummary = summary.replace(/^BOOKING\s*[-–]\s*/i, '').trim();
+  // Summary pode ser "BOOKING - John Smith"; "CLOSED - Not available" não traz nome
+  const nameFromSummary = isBookingReservedSummary(summary)
+    ? 'Reserva Booking.com'
+    : summary.replace(/^BOOKING\s*[-–]\s*/i, '').trim();
 
   const nameMatch   = clean.match(/Guest name[:\s]+(.+)/i);
   const emailMatch  = clean.match(/Guest email[:\s]+([\w.@+-]+)/i);
@@ -177,8 +188,10 @@ export function parseICal(
 
       if (!uid || !dtstart) return null;
 
+      const detectedPlatform = platform ?? detectPlatform(sourceUrl, summary, desc);
+
       // Filtrar bloqueios e eventos que não são reservas
-      if (isBlockedEvent(summary)) {
+      if (isBlockedEvent(summary, detectedPlatform)) {
         console.log(`[iCal] Filtered blocked event: "${summary}"`);
         return null;
       }
@@ -186,8 +199,6 @@ export function parseICal(
       const checkIn  = parseICalDate(dtstart);
       const checkOut = dtend ? parseICalDate(dtend) : checkIn;
       if (!checkIn) return null;
-
-      const detectedPlatform = platform ?? detectPlatform(sourceUrl, summary, desc);
 
       let parsed: ParsedFields;
       switch (detectedPlatform) {
