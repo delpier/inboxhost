@@ -31,7 +31,8 @@
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0F172A"
+        "monochromeImage": "./assets/images/android-icon-monochrome.png",
+        "backgroundColor": "#2563EB"
       },
       "permissions": [
         "android.permission.INTERNET",
@@ -55,6 +56,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/notification-icon.png",
           "color": "#2563EB"
         }
       ]

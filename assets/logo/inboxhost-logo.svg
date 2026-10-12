@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- InboxHost: casa cuja metade inferior é um tabuleiro de caixa de entrada,
+       com um ponto de notificação. 1024×1024, fundo full-bleed. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#1E40AF"/>
+    </linearGradient>
+  </defs>
+  <rect id="background" width="1024" height="1024" fill="url(#bg)"/>
+  <g id="glyph">
+    <g fill="none" stroke="#FFFFFF" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M276 482 L512 286 L748 482"/>
+      <path d="M346 436 V700 Q346 748 394 748 H630 Q678 748 678 700 V436"/>
+      <path d="M346 606 H430 L470 662 H554 L594 606 H678"/>
+    </g>
+    <circle cx="716" cy="300" r="60" fill="#FBBF24"/>
+  </g>
+</svg>
