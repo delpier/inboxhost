@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CalendarSource, Message, Reservation } from '../types';
+import { CalendarSource, GuestOverrides, Message, Reservation } from '../types';
 
 const KEYS = {
   RESERVATIONS:     'reservations',
@@ -56,6 +56,35 @@ export async function markMessagesAsRead(reservationId: string): Promise<void> {
     res.messages = res.messages.map(m => ({ ...m, read: true }));
     await saveReservations(all);
   }
+}
+
+// Aplica os dados editados à mão por cima dos dados vindos do iCal
+export function applyGuestOverrides(reservation: Reservation): Reservation {
+  const ov = reservation.overrides;
+  if (!ov) return reservation;
+  const result: Reservation = { ...reservation };
+  (Object.keys(ov) as (keyof GuestOverrides)[]).forEach(key => {
+    const value = ov[key];
+    if (value === undefined) return;
+    (result as any)[key] = value === '' ? undefined : value;
+  });
+  return result;
+}
+
+export async function updateGuestDetails(
+  reservationId: string,
+  details: GuestOverrides
+): Promise<void> {
+  const all = await getReservations();
+  const idx = all.findIndex(r => r.id === reservationId);
+  if (idx < 0) return;
+  const overrides = { ...all[idx].overrides, ...details };
+  all[idx] = applyGuestOverrides({
+    ...all[idx],
+    overrides,
+    updatedAt: new Date().toISOString(),
+  });
+  await saveReservations(all);
 }
 
 // Remove todas as reservas de uma fonte antes de resync

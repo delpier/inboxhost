@@ -3,11 +3,11 @@ import { parseICal } from './icalParser';
 import {
   getCalendarSources,
   saveCalendarSource,
-  upsertReservation,
-  clearReservationsForSource,
   getReservations,
+  saveReservations,
+  applyGuestOverrides,
 } from './storage';
-import { CalendarSource, Message } from '../types';
+import { CalendarSource, Reservation } from '../types';
 
 export async function syncCalendar(source: CalendarSource): Promise<number> {
   const destUri = `${FileSystem.cacheDirectory}cal_${source.id}.ics`;
@@ -15,40 +15,57 @@ export async function syncCalendar(source: CalendarSource): Promise<number> {
   const result = await FileSystem.downloadAsync(source.url, destUri);
   if (result.status !== 200) throw new Error(`HTTP ${result.status}`);
 
-  const content      = await FileSystem.readAsStringAsync(result.uri);
-  const reservations = parseICal(content, source.id, source.url, source.platform);
+  const content = await FileSystem.readAsStringAsync(result.uri);
+  const parsed  = parseICal(content, source.id, source.url, source.platform);
 
-  // Guarda as mensagens existentes antes de limpar
-  const existing   = await getReservations();
-  const msgMap     = new Map<string, Message[]>();
-  existing
+  // Reservas anteriores desta fonte — para preservar mensagens, edições manuais
+  // e a data de criação
+  const all      = await getReservations();
+  const previous = new Map<string, Reservation>();
+  all
     .filter(r => r.sourceId === source.id)
-    .forEach(r => msgMap.set(r.uid, r.messages));
+    .forEach(r => previous.set(r.uid, r));
 
-  // Limpa reservas antigas desta fonte (remove blocked events do storage)
-  await clearReservationsForSource(source.id);
-
-  // Re-insere apenas as reservas válidas (blocked já filtrados pelo parser)
-  for (const res of reservations) {
-    await upsertReservation({
+  const now    = new Date().toISOString();
+  const merged = parsed.map(res => {
+    const prev = previous.get(res.uid);
+    return applyGuestOverrides({
       ...res,
-      messages:  msgMap.get(res.uid) ?? [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      property:  source.name,
+      overrides: prev?.overrides,
+      messages:  prev?.messages ?? [],
+      createdAt: prev?.createdAt ?? now,
+      updatedAt: now,
     });
-  }
+  });
 
-  await saveCalendarSource({ ...source, lastSync: new Date().toISOString() });
+  // Substitui as reservas desta fonte numa única escrita
+  // (as que já não vêm no iCal — p.ex. bloqueios — desaparecem)
+  await saveReservations([
+    ...all.filter(r => r.sourceId !== source.id),
+    ...merged,
+  ]);
 
-  return reservations.length;
+  await saveCalendarSource({ ...source, lastSync: now });
+
+  return merged.length;
 }
 
 export async function syncAllCalendars(): Promise<{ ok: number; failed: number }> {
   const sources = await getCalendarSources();
   const active  = sources.filter(s => s.active);
-  const results = await Promise.allSettled(active.map(syncCalendar));
-  return {
-    ok:     results.filter(r => r.status === 'fulfilled').length,
-    failed: results.filter(r => r.status === 'rejected').length,
-  };
+
+  // Sequencial: cada sync lê e reescreve a lista de reservas no AsyncStorage,
+  // em paralelo as escritas sobrepunham-se e perdiam-se reservas
+  let ok = 0;
+  let failed = 0;
+  for (const source of active) {
+    try {
+      await syncCalendar(source);
+      ok++;
+    } catch {
+      failed++;
+    }
+  }
+  return { ok, failed };
 }

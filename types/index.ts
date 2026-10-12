@@ -32,6 +32,9 @@ export interface Reservation {
   property?: string;     // Nome da propriedade (se tiveres múltiplas)
   notes?: string;        // DESCRIPTION do iCal
 
+  // ─── Edições manuais ───────────────────────────────────────────────────
+  overrides?: GuestOverrides;    // Dados do hóspede editados à mão — sobrevivem ao sync
+
   // ─── Mensagens ─────────────────────────────────────────────────────────
   messages: Message[];
 
@@ -39,6 +42,12 @@ export interface Reservation {
   createdAt: string;
   updatedAt: string;
 }
+
+// Campos do hóspede que o utilizador pode completar/corrigir manualmente.
+// Uma string vazia significa "apagado pelo utilizador".
+export type GuestOverrides = Partial<
+  Pick<Reservation, 'guestName' | 'guestEmail' | 'guestPhone' | 'numGuests'>
+>;
 
 export interface Message {
   id: string;

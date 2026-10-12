@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, Linking, ScrollView,
 } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO, differenceInDays, isToday, isTomorrow, isPast } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
 import {
   getReservations,
+  getCalendarSources,
   addMessageToReservation,
   markMessagesAsRead,
 } from '../../services/storage';
@@ -40,20 +41,23 @@ export default function ReservationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, locale } = useI18n();
   const [reservation, setReservation] = useState<Reservation | null>(null);
+  const [sourceName, setSourceName]   = useState<string | null>(null);
   const [input, setInput]             = useState('');
   const [sending, setSending]         = useState(false);
   const [showInfo, setShowInfo]       = useState(true);
   const listRef = useRef<FlatList>(null);
   const dateFnsLocale = locale === 'pt' ? pt : enUS;
 
-  const load = async () => {
-    const all = await getReservations();
+  const load = useCallback(async () => {
+    const [all, sources] = await Promise.all([getReservations(), getCalendarSources()]);
     const res = all.find(r => r.id === id) ?? null;
     setReservation(res);
+    setSourceName(sources.find(s => s.id === res?.sourceId)?.name ?? null);
     if (res) await markMessagesAsRead(res.id);
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  // Recarrega ao voltar do ecrã de edição
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const sendMessage = async () => {
     if (!input.trim() || !reservation || sending) return;
@@ -130,6 +134,13 @@ export default function ReservationDetail() {
               <Ionicons name="call-outline" size={22} color="#10B981" />
             </TouchableOpacity>
           ) : null}
+          <TouchableOpacity
+            onPress={() => router.push(`/reservation/edit?id=${encodeURIComponent(reservation.id)}`)}
+            className="p-1"
+            accessibilityLabel={t.detail.edit}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#94A3B8" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -169,11 +180,16 @@ export default function ReservationDetail() {
           {reservation.guestEmail && (
             <InfoRow label={t.detail.email} value={reservation.guestEmail} icon="mail-outline" />
           )}
-          {reservation.guestPhone && (
+          {reservation.guestPhone ? (
             <InfoRow label={t.detail.phone} value={reservation.guestPhone} icon="call-outline" />
-          )}
+          ) : reservation.phoneLast4 ? (
+            <InfoRow label={t.detail.phone} value={`••• ${reservation.phoneLast4}`} icon="call-outline" />
+          ) : null}
+          {reservation.numGuests ? (
+            <InfoRow label={t.edit_guest.num_guests} value={String(reservation.numGuests)} icon="people-outline" />
+          ) : null}
           <InfoRow label={t.detail.platform} value={`${PLATFORM_ICONS[reservation.platform]} ${PLATFORM_LABELS[reservation.platform]}`} icon="globe-outline" />
-          <InfoRow label={t.detail.source} value={reservation.sourceId} icon="link-outline" />
+          <InfoRow label={t.detail.source} value={sourceName ?? reservation.property ?? reservation.sourceId} icon="link-outline" />
           {reservation.notes ? (
             <View className="py-2">
               <Text className="text-slate-500 text-xs mb-1">{t.detail.notes}</Text>
